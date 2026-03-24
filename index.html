@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Checkpoint Quest | Earn Points by Completing Tasks</title>
+    <title>Checkpoint Quest | Real Google Search Challenge</title>
     <style>
         * {
             box-sizing: border-box;
@@ -21,7 +21,7 @@
         }
 
         .quest-container {
-            max-width: 1300px;
+            max-width: 1400px;
             width: 100%;
             background: rgba(18, 25, 45, 0.75);
             backdrop-filter: blur(4px);
@@ -167,18 +167,24 @@
             background: #e67e22;
         }
 
+        .action-btn.danger {
+            background: #7f8c8d;
+        }
+
         .iframe-container {
             margin-top: 20px;
             border-radius: 1.5rem;
             overflow: hidden;
             border: 2px solid #2d3e61;
-            background: white;
+            background: #fff;
+            position: relative;
         }
 
         iframe {
             width: 100%;
-            height: 520px;
+            height: 600px;
             border: none;
+            background: white;
         }
 
         .info-message {
@@ -190,75 +196,21 @@
             color: #b9d0f0;
         }
 
-        .search-simulator {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 20px;
+        .warning-box {
+            background: #2a2a1a;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
         }
 
-        .google-search-bar {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            background: white;
-            padding: 15px;
-            border-radius: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .google-search-bar input {
-            flex: 1;
-            padding: 12px 20px;
-            border: 1px solid #dfe1e5;
-            border-radius: 24px;
-            font-size: 16px;
-            outline: none;
-        }
-
-        .google-search-bar button {
-            background: #4285f4;
-            color: white;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 24px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .search-results {
-            margin-top: 20px;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 20px;
-        }
-
-        .result-item {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .result-item:hover {
-            background: #f8f9fa;
-        }
-
-        .result-title {
-            color: #1a0dab;
-            font-size: 18px;
-            font-weight: normal;
-            margin-bottom: 5px;
-        }
-
-        .result-url {
-            color: #006621;
-            font-size: 14px;
-            margin-bottom: 5px;
-        }
-
-        .result-desc {
-            color: #545454;
-            font-size: 14px;
+        .success-box {
+            background: #1a3a2a;
+            border-left: 4px solid #2ecc71;
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 8px;
+            color: #a8e6cf;
         }
 
         .hidden {
@@ -282,6 +234,7 @@
             font-weight: bold;
             border: 1px solid #ffb347;
             animation: fadeInUp 0.3s ease;
+            pointer-events: none;
         }
 
         @keyframes fadeInUp {
@@ -295,17 +248,36 @@
             }
         }
 
-        .row-highlight {
-            background: #26334d;
-            border-left: 4px solid #ffb347;
-            padding: 8px 14px;
-            font-family: monospace;
-            border-radius: 20px;
-            margin: 10px 0;
+        .iframe-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            pointer-events: none;
+            z-index: 10;
         }
 
-        .clickable {
-            cursor: pointer;
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid #ffb347;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -345,19 +317,25 @@
             🔐 You must click "Allow Tracking" (Chrome/Safari permission popup). Then checkpoints unlock.
         </div>
         <div id="actionArea"></div>
-        <div id="simulatorArea" class="hidden"></div>
+        <div id="iframeZone" class="iframe-container hidden">
+            <iframe id="trackingFrame" src="about:blank" title="Google Search"></iframe>
+            <div class="iframe-overlay"></div>
+        </div>
         <div id="verificationMessage" class="info-message hidden"></div>
     </div>
 </div>
 
 <script>
-    let currentCheckpoint = 0;
-    let totalPoints = 0;
-    let trackingAllowed = false;
-    let checkpoint1Completed = false;
-    let checkpoint2Completed = false;
+    // Load saved state from localStorage
+    let currentCheckpoint = parseInt(localStorage.getItem('checkpoint_curr')) || 0;
+    let totalPoints = parseInt(localStorage.getItem('points_total')) || 0;
+    let trackingAllowed = localStorage.getItem('tracking_allowed') === 'true';
+    let checkpoint1Completed = localStorage.getItem('cp1_complete') === 'true';
+    let checkpoint2Completed = localStorage.getItem('cp2_complete') === 'true';
     
-    const CORRECT_LINK = "https://schedulebuilder.org/";
+    const TARGET_URL = "schedulebuilder.org";
+    let iframeLoadCount = 0;
+    let lastCheckedUrl = "";
     
     const pointsSpan = document.getElementById('pointsDisplay');
     const cp1Node = document.getElementById('cp1Node');
@@ -370,20 +348,32 @@
     const taskRewardSpan = document.getElementById('taskReward');
     const taskDescDiv = document.getElementById('taskDescription');
     const actionArea = document.getElementById('actionArea');
-    const simulatorArea = document.getElementById('simulatorArea');
+    const iframeZone = document.getElementById('iframeZone');
+    const trackingFrame = document.getElementById('trackingFrame');
     const verificationMsgDiv = document.getElementById('verificationMessage');
     const trackingTextSpan = document.getElementById('trackingText');
     
-    function updatePointsUI() {
-        pointsSpan.innerText = totalPoints;
+    function saveState() {
+        localStorage.setItem('checkpoint_curr', currentCheckpoint);
+        localStorage.setItem('points_total', totalPoints);
+        localStorage.setItem('tracking_allowed', trackingAllowed);
+        localStorage.setItem('cp1_complete', checkpoint1Completed);
+        localStorage.setItem('cp2_complete', checkpoint2Completed);
     }
     
-    function showToast(message) {
+    function updatePointsUI() {
+        pointsSpan.innerText = totalPoints;
+        saveState();
+    }
+    
+    function showToast(message, isError = false) {
         const toast = document.createElement('div');
         toast.className = 'toast';
+        toast.style.background = isError ? '#2c1a1a' : '#1f2c46';
+        toast.style.borderColor = isError ? '#e74c3c' : '#ffb347';
         toast.innerText = message;
         document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
+        setTimeout(() => toast.remove(), 3500);
     }
     
     function updateCheckpointVisuals() {
@@ -417,6 +407,8 @@
         else cp1Node.classList.remove('active');
         if (currentCheckpoint === 2 && !checkpoint2Completed) cp2Node.classList.add('active');
         else cp2Node.classList.remove('active');
+        
+        saveState();
     }
     
     function awardCheckpoint1() {
@@ -427,7 +419,8 @@
         currentCheckpoint = 2;
         updateCheckpointVisuals();
         renderCurrentTask();
-        showToast("🎉 +25 Points! Checkpoint 1 complete! Moving to Checkpoint 2 (75pts)");
+        showToast("🎉 +25 Points! Checkpoint 1 complete! Now find schedulebuilder.org to earn 75 points!");
+        saveState();
     }
     
     function awardCheckpoint2() {
@@ -438,16 +431,59 @@
         currentCheckpoint = 3;
         updateCheckpointVisuals();
         renderCurrentTask();
-        showToast("🏆 +75 Points! You clicked the correct link! Mission complete!");
+        showToast("🏆 +75 Points! You found schedulebuilder.org! Mission complete!");
+        saveState();
+    }
+    
+    // Monitor iframe navigation to detect when user visits schedulebuilder.org
+    function setupIframeTracking() {
+        trackingFrame.addEventListener('load', function() {
+            let currentUrl = "";
+            try {
+                // Try to get the actual URL from the iframe
+                currentUrl = trackingFrame.contentWindow.location.href;
+            } catch(e) {
+                // Cross-origin error - can't read URL directly due to security
+                // But we can still detect if the iframe is on a different domain
+                currentUrl = trackingFrame.src;
+            }
+            
+            console.log("[Tracker] Iframe loaded:", currentUrl);
+            
+            // Checkpoint 1: User needs to search for "Schedule Online" on Google
+            if (!checkpoint1Completed && trackingAllowed && currentCheckpoint === 1) {
+                // Check if they're on Google search results with "Schedule Online"
+                if (currentUrl.includes('google.com') && (currentUrl.includes('q=Schedule+Online') || currentUrl.includes('q=Schedule%20Online') || currentUrl.includes('q="Schedule Online"'))) {
+                    awardCheckpoint1();
+                    showToast("✅ Great! You searched for 'Schedule Online'! +25 points awarded!");
+                } else if (currentUrl.includes('google.com') && currentUrl.includes('schedule') && currentUrl.includes('online')) {
+                    // Also catch variations
+                    awardCheckpoint1();
+                    showToast("✅ Great! You searched for 'Schedule Online'! +25 points awarded!");
+                }
+            }
+            
+            // Checkpoint 2: User needs to find and click schedulebuilder.org
+            if (!checkpoint2Completed && checkpoint1Completed && trackingAllowed && currentCheckpoint === 2) {
+                if (currentUrl.includes(TARGET_URL)) {
+                    awardCheckpoint2();
+                    showToast("🎯 Perfect! You found schedulebuilder.org! +75 points awarded!");
+                }
+            }
+        });
     }
     
     function renderCurrentTask() {
         if (!trackingAllowed) {
             taskTitleSpan.innerText = "🔔 Allow tracking (required)";
             taskRewardSpan.innerText = "🔓 Unlock system";
-            taskDescDiv.innerHTML = "⚠️ Chrome / Safari will show a browser popup. You must click 'Allow' to start the checkpoint journey.";
-            actionArea.innerHTML = `<button class="action-btn primary" id="requestTrackingBtn">📡 Request Tracking Permission</button>`;
-            simulatorArea.classList.add('hidden');
+            taskDescDiv.innerHTML = `
+                <strong>⚠️ Chrome / Safari Tracking Permission Required</strong><br><br>
+                Click the button below to allow tracking. Your browser will show a permission popup - you MUST click "Allow" to continue.<br>
+                This is required to verify your task completion.
+            `;
+            actionArea.innerHTML = `<button class="action-btn primary" id="requestTrackingBtn">📡 Allow Tracking Permission</button>`;
+            iframeZone.classList.add('hidden');
             verificationMsgDiv.classList.add('hidden');
             const btn = document.getElementById('requestTrackingBtn');
             if (btn) btn.onclick = requestTrackingPermission;
@@ -458,141 +494,95 @@
             taskTitleSpan.innerText = "🌐 Checkpoint 1 · Search 'Schedule Online' on Google";
             taskRewardSpan.innerText = "+25 pts";
             taskDescDiv.innerHTML = `
-                <strong>📋 Instructions:</strong><br>
-                1. Type "Schedule Online" in the Google search bar below<br>
-                2. Click the search button or press Enter<br>
-                3. The system will detect your search and award 25 points!
-            `;
-            actionArea.innerHTML = '';
-            simulatorArea.classList.remove('hidden');
-            simulatorArea.innerHTML = `
-                <div class="search-simulator">
-                    <div class="google-search-bar">
-                        <input type="text" id="googleSearchInput" placeholder="Google Search" value="Schedule Online">
-                        <button id="googleSearchBtn">🔍 Google Search</button>
-                    </div>
-                    <div id="searchResultsArea" class="search-results hidden"></div>
+                <div class="warning-box">
+                    <strong>📋 INSTRUCTIONS:</strong><br>
+                    1. In the Google iframe below, type <strong>"Schedule Online"</strong> in the search bar<br>
+                    2. Press Enter or click Google Search<br>
+                    3. Once you search for "Schedule Online", you'll automatically earn 25 points!
+                </div>
+                <div class="success-box" style="margin-top: 10px;">
+                    💡 <strong>Hint:</strong> Just search for "Schedule Online" on Google. The system will detect your search.
                 </div>
             `;
+            actionArea.innerHTML = `<button class="action-btn secondary" id="resetGoogleBtn">🔄 Reset to Google.com</button>`;
+            iframeZone.classList.remove('hidden');
+            verificationMsgDiv.classList.add('hidden');
             
-            const searchInput = document.getElementById('googleSearchInput');
-            const searchBtn = document.getElementById('googleSearchBtn');
-            const resultsArea = document.getElementById('searchResultsArea');
+            // Only set google.com if iframe is empty or needs reset
+            if (trackingFrame.src === "about:blank" || trackingFrame.src.includes("about:blank")) {
+                trackingFrame.src = "https://www.google.com";
+            }
             
-            const performSearch = () => {
-                const query = searchInput.value.trim();
-                if (query.toLowerCase() === "schedule online") {
-                    resultsArea.classList.remove('hidden');
-                    resultsArea.innerHTML = `
-                        <div style="padding: 10px; color: #34a853; font-weight: bold;">✓ Search successful! Detected "Schedule Online"</div>
-                        <div class="result-item">
-                            <div class="result-title">Schedule Online - Easy Booking Platform</div>
-                            <div class="result-url">https://schedulebuilder.org/</div>
-                            <div class="result-desc">Schedule appointments online easily with our free platform...</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-title">Online Scheduling Software</div>
-                            <div class="result-url">https://calendly.com/</div>
-                            <div class="result-desc">Simplify scheduling with online booking tools...</div>
-                        </div>
-                        <div class="result-item" id="targetResultItem">
-                            <div class="result-title">ScheduleBuilder - Official Site</div>
-                            <div class="result-url">https://schedulebuilder.org/</div>
-                            <div class="result-desc">The official schedule building platform for professionals...</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-title">Schedule Online - Google Business</div>
-                            <div class="result-url">https://business.google.com/</div>
-                            <div class="result-desc">Manage appointments with Google Business...</div>
-                        </div>
-                    `;
-                    
-                    awardCheckpoint1();
-                } else {
-                    resultsArea.classList.remove('hidden');
-                    resultsArea.innerHTML = `<div style="padding: 10px; color: #ea4335;">⚠️ Please search exactly: "Schedule Online" to complete checkpoint 1</div>`;
-                }
-            };
-            
-            searchBtn.onclick = performSearch;
-            searchInput.onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
-            
+            const resetBtn = document.getElementById('resetGoogleBtn');
+            if (resetBtn) {
+                resetBtn.onclick = () => {
+                    trackingFrame.src = "https://www.google.com";
+                    showToast("Reset to Google.com");
+                };
+            }
             return;
         }
         else if (!checkpoint2Completed) {
-            taskTitleSpan.innerText = "🎯 Checkpoint 2 · Click the 4th Row Link";
+            taskTitleSpan.innerText = "🎯 Checkpoint 2 · Find and Visit schedulebuilder.org";
             taskRewardSpan.innerText = "+75 pts";
             taskDescDiv.innerHTML = `
-                <strong>🎯 Mission:</strong> In the search results below, click the <strong>4th row link</strong> that matches exactly:<br>
-                <div class="row-highlight">🔗 ${CORRECT_LINK}</div>
-                Once you click the correct matching URL, you'll receive 75 points!
-            `;
-            actionArea.innerHTML = `<button class="action-btn secondary" id="resetSearchCp2">🔄 Reset Search Results</button>`;
-            simulatorArea.classList.remove('hidden');
-            simulatorArea.innerHTML = `
-                <div class="search-simulator">
-                    <div class="google-search-bar" style="background: #f2f2f2;">
-                        <input type="text" value="Schedule Online" disabled style="background: #f8f9fa;">
-                        <button disabled style="background: #9aa0a6;">🔍</button>
-                    </div>
-                    <div class="search-results">
-                        <div class="result-item">
-                            <div class="result-title">Schedule Online - Easy Booking Platform</div>
-                            <div class="result-url">https://booking.example.com/</div>
-                            <div class="result-desc">Book appointments online instantly...</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-title">Online Scheduling Software</div>
-                            <div class="result-url">https://calendly.com/</div>
-                            <div class="result-desc">Simplify scheduling with online booking tools...</div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-title">ScheduleBuilder Pro</div>
-                            <div class="result-url">https://schedulebuilderpro.com/</div>
-                            <div class="result-desc">Advanced scheduling for businesses...</div>
-                        </div>
-                        <div class="result-item clickable" id="correctLinkRow">
-                            <div class="result-title" style="color: #1a0dab;">⭐ ScheduleBuilder Official</div>
-                            <div class="result-url" style="color: #006621;">https://schedulebuilder.org/</div>
-                            <div class="result-desc">The official schedule building platform - 4th row link</div>
-                            <div style="margin-top: 8px;"><span style="background: #f5b04220; padding: 2px 8px; border-radius: 12px; font-size: 12px;">🎯 Correct target link (4th row)</span></div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-title">Schedule Online - Google Business</div>
-                            <div class="result-url">https://business.google.com/</div>
-                            <div class="result-desc">Manage appointments with Google Business...</div>
-                        </div>
-                    </div>
+                <div class="warning-box">
+                    <strong>🎯 MISSION:</strong><br>
+                    In the Google search results below, find and click the link to <strong>schedulebuilder.org</strong><br><br>
+                    <strong>Task:</strong><br>
+                    1. Use Google search (try searching "Schedule Online" again if needed)<br>
+                    2. Look through the search results carefully<br>
+                    3. Click on the result that goes to <strong>schedulebuilder.org</strong><br>
+                    4. Once you visit the site, you'll automatically earn 75 points!
+                </div>
+                <div class="success-box" style="margin-top: 10px;">
+                    💡 <strong>Hint:</strong> The correct link is somewhere in the search results. You need to find it yourself!
                 </div>
             `;
+            actionArea.innerHTML = `
+                <button class="action-btn secondary" id="resetGoogleCp2">🔄 Reset to Google.com</button>
+                <button class="action-btn" id="searchAgainBtn" style="margin-left: 10px;">🔍 Search "Schedule Online"</button>
+            `;
+            iframeZone.classList.remove('hidden');
+            verificationMsgDiv.classList.add('hidden');
             
-            const resetBtn = document.getElementById('resetSearchCp2');
+            if (trackingFrame.src === "about:blank" || !trackingFrame.src.includes("google.com")) {
+                trackingFrame.src = "https://www.google.com";
+            }
+            
+            const resetBtn = document.getElementById('resetGoogleCp2');
             if (resetBtn) {
                 resetBtn.onclick = () => {
-                    renderCurrentTask();
-                    showToast("Search results reset!");
+                    trackingFrame.src = "https://www.google.com";
+                    showToast("Reset to Google.com");
                 };
             }
             
-            const correctElement = document.getElementById('correctLinkRow');
-            if (correctElement) {
-                correctElement.onclick = () => {
-                    if (!checkpoint2Completed) {
-                        awardCheckpoint2();
-                    }
+            const searchBtn = document.getElementById('searchAgainBtn');
+            if (searchBtn) {
+                searchBtn.onclick = () => {
+                    trackingFrame.src = "https://www.google.com/search?q=Schedule+Online";
+                    showToast("🔍 Searching for 'Schedule Online'...");
                 };
-                correctElement.style.cursor = 'pointer';
             }
             return;
         }
         else {
             taskTitleSpan.innerText = "🎉 Challenge Complete!";
             taskRewardSpan.innerText = "🏁 Finished";
-            taskDescDiv.innerHTML = `✨ You collected ${totalPoints} points! Great job completing both checkpoints.`;
+            taskDescDiv.innerHTML = `
+                <div class="success-box">
+                    ✨ You collected ${totalPoints} points! Great job completing both checkpoints!<br><br>
+                    <strong>Summary:</strong><br>
+                    ✓ Checkpoint 1: Searched for "Schedule Online" (+25 pts)<br>
+                    ✓ Checkpoint 2: Found schedulebuilder.org (+75 pts)<br><br>
+                    🎮 Total: ${totalPoints} points
+                </div>
+            `;
             actionArea.innerHTML = `<button class="action-btn" disabled>✅ Mission Accomplished</button>`;
-            simulatorArea.classList.add('hidden');
+            iframeZone.classList.add('hidden');
             verificationMsgDiv.classList.remove('hidden');
-            verificationMsgDiv.innerHTML = `🏅 Congratulations! All checkpoints passed. Total points: ${totalPoints}`;
+            verificationMsgDiv.innerHTML = `🏅 Congratulations! You completed all checkpoints! Total points: ${totalPoints}`;
             return;
         }
     }
@@ -603,44 +593,81 @@
             return;
         }
         
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
+        // Use Notification API for clean browser permission popup
+        if (Notification.permission === "granted") {
+            trackingAllowed = true;
+            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+            currentCheckpoint = 1;
+            updateCheckpointVisuals();
+            renderCurrentTask();
+            showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
+            saveState();
+        } else if (Notification.permission !== "denied") {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
                     trackingAllowed = true;
                     trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
                     currentCheckpoint = 1;
                     updateCheckpointVisuals();
                     renderCurrentTask();
-                    showToast("✅ Tracking allowed! Now proceed to Checkpoint 1 (25pts).");
-                },
-                (error) => {
-                    showToast("❌ You must allow tracking permission to continue. Click again and select 'Allow'.");
+                    showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
+                    saveState();
+                } else {
+                    showToast("❌ You must allow tracking to continue. Click the button again and select 'Allow'.", true);
                     trackingTextSpan.innerText = "Tracking: DENIED";
-                },
-                { enableHighAccuracy: false, timeout: 8000 }
-            );
+                }
+            });
         } else {
-            if(confirm("Browser doesn't support auto-permission. Simulate tracking? (Click OK for demo)")) {
-                trackingAllowed = true;
-                trackingTextSpan.innerText = "Tracking: ACTIVE (simulated)";
-                currentCheckpoint = 1;
-                updateCheckpointVisuals();
-                renderCurrentTask();
-                showToast("Tracking manually allowed (demo mode)");
+            // Fallback to geolocation if notifications are blocked
+            if (navigator.geolocation) {
+                showToast("⚠️ Please allow location access for tracking", false);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        trackingAllowed = true;
+                        trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+                        currentCheckpoint = 1;
+                        updateCheckpointVisuals();
+                        renderCurrentTask();
+                        showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
+                        saveState();
+                    },
+                    (error) => {
+                        showToast("❌ You must allow tracking permission to continue. Please refresh and click Allow.", true);
+                        trackingTextSpan.innerText = "Tracking: DENIED";
+                    }
+                );
+            } else {
+                if(confirm("Browser permission required. Click OK to simulate tracking (demo mode)")) {
+                    trackingAllowed = true;
+                    trackingTextSpan.innerText = "Tracking: ACTIVE (demo)";
+                    currentCheckpoint = 1;
+                    updateCheckpointVisuals();
+                    renderCurrentTask();
+                    showToast("Tracking enabled (demo mode)");
+                    saveState();
+                }
             }
         }
     }
     
     function init() {
-        trackingAllowed = false;
-        checkpoint1Completed = false;
-        checkpoint2Completed = false;
-        totalPoints = 0;
-        currentCheckpoint = 0;
         updatePointsUI();
-        trackingTextSpan.innerText = "Tracking: Pending";
+        
+        if (trackingAllowed) {
+            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+        } else {
+            trackingTextSpan.innerText = "Tracking: Pending";
+        }
+        
         updateCheckpointVisuals();
         renderCurrentTask();
+        setupIframeTracking();
+        
+        if (checkpoint1Completed && checkpoint2Completed) {
+            showToast("🎉 Welcome back! You've already completed all checkpoints!");
+        } else if (trackingAllowed && !checkpoint1Completed) {
+            showToast("📍 Tracking active! Search for 'Schedule Online' on Google to earn 25 points.");
+        }
     }
     
     init();
