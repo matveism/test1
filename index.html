@@ -7,7 +7,6 @@
     <style>
         * {
             box-sizing: border-box;
-            user-select: none; /* subtle, avoid accidental text selection on buttons */
         }
 
         body {
@@ -21,7 +20,6 @@
             padding: 24px;
         }
 
-        /* main card container */
         .quest-container {
             max-width: 1300px;
             width: 100%;
@@ -30,10 +28,8 @@
             border-radius: 3rem;
             padding: 24px 28px 32px;
             box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
-            transition: all 0.2s;
         }
 
-        /* header + points */
         .status-bar {
             display: flex;
             justify-content: space-between;
@@ -54,8 +50,6 @@
             font-weight: 700;
             font-size: 1.7rem;
             color: #ffdf8c;
-            letter-spacing: 1px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
         .points-badge span {
@@ -94,7 +88,6 @@
             gap: 12px;
             font-weight: 600;
             border: 1px solid #2d3a5e;
-            backdrop-filter: blur(4px);
             transition: 0.2s;
         }
 
@@ -124,7 +117,6 @@
             box-shadow: 0 0 10px #f5a62340;
         }
 
-        /* main task area */
         .task-panel {
             background: #0a0f1c;
             border-radius: 2rem;
@@ -164,21 +156,15 @@
             cursor: pointer;
             transition: 0.2s;
             font-size: 0.9rem;
-            box-shadow: 0 1px 2px black;
         }
 
-        .action-btn:active {
-            transform: scale(0.97);
+        .action-btn:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.05);
         }
 
         .action-btn.primary {
             background: #e67e22;
-            color: white;
-            box-shadow: 0 4px 12px #e67e2240;
-        }
-
-        .action-btn.secondary {
-            background: #2c3e66;
         }
 
         .iframe-container {
@@ -186,15 +172,13 @@
             border-radius: 1.5rem;
             overflow: hidden;
             border: 2px solid #2d3e61;
-            background: #00000022;
-            transition: 0.2s;
+            background: white;
         }
 
         iframe {
             width: 100%;
             height: 520px;
             border: none;
-            background: #fff;
         }
 
         .info-message {
@@ -204,24 +188,77 @@
             margin-top: 18px;
             font-size: 0.85rem;
             color: #b9d0f0;
+        }
+
+        .search-simulator {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .google-search-bar {
             display: flex;
+            gap: 10px;
             align-items: center;
-            gap: 12px;
+            background: white;
+            padding: 15px;
+            border-radius: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
 
-        .loader-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #aaa;
-            border-top: 2px solid #ffb347;
-            border-radius: 50%;
-            animation: spin 0.7s linear infinite;
+        .google-search-bar input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            font-size: 16px;
+            outline: none;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .google-search-bar button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 24px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .search-results {
+            margin-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 20px;
+        }
+
+        .result-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .result-item:hover {
+            background: #f8f9fa;
+        }
+
+        .result-title {
+            color: #1a0dab;
+            font-size: 18px;
+            font-weight: normal;
+            margin-bottom: 5px;
+        }
+
+        .result-url {
+            color: #006621;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .result-desc {
+            color: #545454;
+            font-size: 14px;
         }
 
         .hidden {
@@ -230,48 +267,60 @@
 
         .green-check {
             color: #2ecc71;
-            font-size: 1.3rem;
-            filter: drop-shadow(0 0 2px #2ecc71);
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2c46;
+            color: #ffdfb3;
+            padding: 12px 24px;
+            border-radius: 60px;
+            z-index: 9999;
+            font-weight: bold;
+            border: 1px solid #ffb347;
+            animation: fadeInUp 0.3s ease;
         }
 
-        .row-link-highlight {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+
+        .row-highlight {
             background: #26334d;
             border-left: 4px solid #ffb347;
             padding: 8px 14px;
             font-family: monospace;
             border-radius: 20px;
+            margin: 10px 0;
         }
 
-        @media (max-width: 780px) {
-            .quest-container {
-                padding: 16px;
-            }
-            iframe {
-                height: 420px;
-            }
+        .clickable {
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 
 <div class="quest-container" id="app">
-    <!-- status bar -->
     <div class="status-bar">
         <div class="points-badge">
             <span>💰 POINTS</span> <span id="pointsDisplay">0</span>
         </div>
-        <div class="tracking-status" id="trackingStatusWidget">
+        <div class="tracking-status">
             <span>📍</span> <span id="trackingText">Tracking: Pending</span>
         </div>
     </div>
 
-    <!-- checkpoint visual markers -->
     <div class="checkpoint-track">
         <div class="checkpoint-node" id="cp1Node">
             <div class="checkmark" id="cp1Mark">⏳</div>
@@ -283,41 +332,33 @@
         </div>
         <div class="checkpoint-node" id="cp3Node">
             <div class="checkmark" id="cp3Mark">🔒</div>
-            <div class="checkpoint-label">🎯 Final · 0 pts (verification)</div>
+            <div class="checkpoint-label">🎯 Final · Verification</div>
         </div>
     </div>
 
-    <!-- DYNAMIC TASK PANEL: changes based on active checkpoint -->
     <div class="task-panel" id="taskPanel">
         <div class="task-header">
             <span id="taskTitle">📍 Allow Tracking First</span>
             <span class="reward" id="taskReward">+25 pts</span>
         </div>
         <div id="taskDescription" class="info-message">
-            🔐 You must click "Allow Tracking" (Chrome/Safari permission). Then first checkpoint unlocks.
+            🔐 You must click "Allow Tracking" (Chrome/Safari permission popup). Then checkpoints unlock.
         </div>
         <div id="actionArea"></div>
-        <div id="iframeZone" class="iframe-container hidden">
-            <iframe id="trackingFrame" src="about:blank" title="tracking frame"></iframe>
-        </div>
+        <div id="simulatorArea" class="hidden"></div>
         <div id="verificationMessage" class="info-message hidden"></div>
     </div>
 </div>
 
 <script>
-    // ---------- STATE ----------
-    let currentCheckpoint = 0;   // 0 = tracking not allowed yet, 1 = checkpoint1 (25pts google+schedule online), 2 = checkpoint2 (75pts + 4th row link)
+    let currentCheckpoint = 0;
     let totalPoints = 0;
-    let trackingAllowed = false;   // actual permission from browser (or simulated fallback)
+    let trackingAllowed = false;
     let checkpoint1Completed = false;
     let checkpoint2Completed = false;
     
-    // special tracking: we will monitor iframe navigation events for checkpoint 1 and 2
-    let cp1Validated = false;      // already earned 25pts?
-    let cp2Validated = false;      // earned 75pts?
-    let cp2LinkMatched = false;     // did user click the exact correct link in iframe? we track manually.
+    const CORRECT_LINK = "https://schedulebuilder.org/";
     
-    // DOM elements
     const pointsSpan = document.getElementById('pointsDisplay');
     const cp1Node = document.getElementById('cp1Node');
     const cp2Node = document.getElementById('cp2Node');
@@ -329,22 +370,23 @@
     const taskRewardSpan = document.getElementById('taskReward');
     const taskDescDiv = document.getElementById('taskDescription');
     const actionArea = document.getElementById('actionArea');
-    const iframeZone = document.getElementById('iframeZone');
-    const trackingFrame = document.getElementById('trackingFrame');
+    const simulatorArea = document.getElementById('simulatorArea');
     const verificationMsgDiv = document.getElementById('verificationMessage');
     const trackingTextSpan = document.getElementById('trackingText');
     
-    // Hidden correct link for checkpoint2: "https://schedulebuilder.org/"
-    const CORRECT_LINK = "https://schedulebuilder.org/";
-    
-    // Helper: update UI points
     function updatePointsUI() {
         pointsSpan.innerText = totalPoints;
     }
     
-    // Helper: update checkpoint visuals
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
     function updateCheckpointVisuals() {
-        // Checkpoint 1 node
         if (checkpoint1Completed) {
             cp1Node.classList.add('completed');
             cp1Mark.innerHTML = '✔️';
@@ -353,7 +395,7 @@
             cp1Node.classList.remove('completed');
             cp1Mark.innerHTML = currentCheckpoint === 1 ? '⏳' : (trackingAllowed ? '◻️' : '🔒');
         }
-        // Checkpoint 2 node
+        
         if (checkpoint2Completed) {
             cp2Node.classList.add('completed');
             cp2Mark.innerHTML = '✔️';
@@ -362,7 +404,7 @@
             cp2Node.classList.remove('completed');
             cp2Mark.innerHTML = currentCheckpoint === 2 ? '⏳' : (checkpoint1Completed ? '◻️' : '🔒');
         }
-        // Final node (just style)
+        
         if (checkpoint1Completed && checkpoint2Completed) {
             cp3Node.classList.add('completed');
             cp3Mark.innerHTML = '🏆';
@@ -370,88 +412,24 @@
             cp3Node.classList.remove('completed');
             cp3Mark.innerHTML = '🔒';
         }
-        // active highlight
+        
         if (currentCheckpoint === 1 && !checkpoint1Completed) cp1Node.classList.add('active');
         else cp1Node.classList.remove('active');
         if (currentCheckpoint === 2 && !checkpoint2Completed) cp2Node.classList.add('active');
         else cp2Node.classList.remove('active');
-        if (currentCheckpoint === 3) cp3Node.classList.add('active');
-        else cp3Node.classList.remove('active');
     }
     
-    // render task based on currentCheckpoint and trackingAllowed
-    function renderCurrentTask() {
-        if (!trackingAllowed) {
-            // tracking not yet granted: show permission button
-            taskTitleSpan.innerText = "🔔 Allow tracking (required)";
-            taskRewardSpan.innerText = "🔓 Unlock system";
-            taskDescDiv.innerHTML = "⚠️ Chrome / Safari will show a browser popup. You must click 'Allow' to start the checkpoint journey. After allowing, checkpoint1 will appear.";
-            actionArea.innerHTML = `<button class="action-btn primary" id="requestTrackingBtn">📡 Request Tracking Permission</button>`;
-            iframeZone.classList.add('hidden');
-            verificationMsgDiv.classList.add('hidden');
-            const btn = document.getElementById('requestTrackingBtn');
-            if (btn) btn.onclick = requestTrackingPermission;
-            return;
-        }
-        
-        // tracking allowed - handle checkpoints
-        if (!checkpoint1Completed) {
-            // checkpoint 1: 25 pts - user must go to google.com and type "Schedule Online" (via iframe)
-            taskTitleSpan.innerText = "🌐 Checkpoint 1 · Visit Google & search";
-            taskRewardSpan.innerText = "+25 pts";
-            taskDescDiv.innerHTML = `✔️ Step: Use the iframe below to open <strong>google.com</strong>, then type <strong>"Schedule Online"</strong> and press Enter. 
-            <br>🔄 The system will detect when you successfully navigate to google results / google domain with that query. Once verified, you'll instantly earn 25 points!`;
-            actionArea.innerHTML = `<button class="action-btn secondary" id="resetGoogleBtn">🔁 Reset iframe to Google.com</button>`;
-            iframeZone.classList.remove('hidden');
-            verificationMsgDiv.classList.add('hidden');
-            trackingFrame.src = "https://www.google.com";
-            const resetBtn = document.getElementById('resetGoogleBtn');
-            if (resetBtn) resetBtn.onclick = () => { trackingFrame.src = "https://www.google.com"; };
-            return;
-        } 
-        else if (!checkpoint2Completed) {
-            // checkpoint 2: 75 pts - user must open 4th row link that matches schedulebuilder.org
-            taskTitleSpan.innerText = "🎯 Checkpoint 2 · Click the correct 4th row link";
-            taskRewardSpan.innerText = "+75 pts";
-            taskDescDiv.innerHTML = `🔍 <strong>Mission:</strong> In the iframe below, navigate / click the <strong>4th row</strong> link that matches exactly:<br>
-            <div class="row-link-highlight">🔗 ${CORRECT_LINK}</div>
-            Once you click the correct matching URL, you'll receive 75 points! (iframe will track your clicks).`;
-            actionArea.innerHTML = `<button class="action-btn secondary" id="resetToGoogleCp2">🔄 Reset to google.com</button>`;
-            iframeZone.classList.remove('hidden');
-            verificationMsgDiv.classList.add('hidden');
-            trackingFrame.src = "https://www.google.com";
-            const resetCp2 = document.getElementById('resetToGoogleCp2');
-            if (resetCp2) resetCp2.onclick = () => { trackingFrame.src = "https://www.google.com"; };
-            return;
-        }
-        else {
-            // all checkpoints complete
-            taskTitleSpan.innerText = "🎉 Challenge Complete!";
-            taskRewardSpan.innerText = "🏁 Finished";
-            taskDescDiv.innerHTML = `✨ You collected ${totalPoints} points! Great job completing both checkpoints. Tracking verified.`;
-            actionArea.innerHTML = `<button class="action-btn" disabled>✅ Mastered</button>`;
-            iframeZone.classList.add('hidden');
-            verificationMsgDiv.classList.remove('hidden');
-            verificationMsgDiv.innerHTML = `🏅 Congratulations! All checkpoints passed. Final points: ${totalPoints}`;
-            verificationMsgDiv.classList.remove('hidden');
-            return;
-        }
-    }
-    
-    // function to award checkpoint1 (25pts)
     function awardCheckpoint1() {
         if (checkpoint1Completed) return;
         checkpoint1Completed = true;
         totalPoints += 25;
         updatePointsUI();
-        // move to checkpoint 2
         currentCheckpoint = 2;
         updateCheckpointVisuals();
         renderCurrentTask();
-        showToastMessage("🎉 +25 Points! Checkpoint 1 complete. Moving to Checkpoint 2 (75pts)");
+        showToast("🎉 +25 Points! Checkpoint 1 complete! Moving to Checkpoint 2 (75pts)");
     }
     
-    // award checkpoint2 (75pts)
     function awardCheckpoint2() {
         if (checkpoint2Completed) return;
         checkpoint2Completed = true;
@@ -460,129 +438,199 @@
         currentCheckpoint = 3;
         updateCheckpointVisuals();
         renderCurrentTask();
-        showToastMessage("🏆 +75 Points! You clicked the correct hidden link! Mission accomplished.");
+        showToast("🏆 +75 Points! You clicked the correct link! Mission complete!");
     }
     
-    // mini toast (simple)
-    function showToastMessage(msg) {
-        const existing = document.querySelector('.custom-toast');
-        if(existing) existing.remove();
-        const toast = document.createElement('div');
-        toast.innerText = msg;
-        toast.style.position = 'fixed';
-        toast.style.bottom = '20px';
-        toast.style.left = '50%';
-        toast.style.transform = 'translateX(-50%)';
-        toast.style.backgroundColor = '#1f2c46';
-        toast.style.color = '#ffdfb3';
-        toast.style.padding = '12px 24px';
-        toast.style.borderRadius = '60px';
-        toast.style.zIndex = '9999';
-        toast.style.fontWeight = 'bold';
-        toast.style.border = '1px solid #ffb347';
-        toast.style.backdropFilter = 'blur(12px)';
-        toast.style.fontSize = '0.9rem';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 2800);
-    }
-    
-    // IFRAME EVENT HANDLER: we need to track both navigation and click (by monitoring iframe location changes & possible link clicks)
-    // Because of cross-origin restrictions we cannot read full iframe DOM, but we can detect src changes via load event + iframe's contentWindow.location?
-    // Actually due to CORS we cannot read google.com iframe location, but we can listen to iframe 'load' event and capture its src property.
-    // For checkpoint1: we need to detect when user navigates to google.com/search?q=Schedule+Online OR any google result page containing schedule online.
-    // For checkpoint2: We need to detect that user clicked a link that leads to "https://schedulebuilder.org/" inside iframe.
-    // Since we cannot directly intercept click due to cross-origin, we will listen for iframe navigation (window.location changes inside iframe) 
-    // Because google results page, when a user clicks a search result, the iframe navigates to the target link. We can catch that via iframe 'load' and read iframe.src
-    // For checkpoint2: if the iframe navigates to CORRECT_LINK, we award points.
-    // Additional: for checkpoint1 we check if current src includes google.com/search and has "Schedule+Online" or similar.
-    
-    function setupIframeTracking() {
-        trackingFrame.addEventListener('load', function onFrameLoad() {
-            let frameSrc = "";
-            try {
-                // try to get src attribute (safest)
-                frameSrc = trackingFrame.contentWindow?.location?.href || trackingFrame.src;
-            } catch(e) {
-                frameSrc = trackingFrame.src;
-            }
-            if (!frameSrc) frameSrc = trackingFrame.src;
-            console.log("[iframe] navigated to:", frameSrc);
-            
-            // ---- Checkpoint 1 validation ----
-            if (!checkpoint1Completed && trackingAllowed && currentCheckpoint === 1) {
-                // user must go to google.com and type "Schedule Online"
-                // we validate if current url is google search with "schedule online" query (case-insensitive)
-                const lowerUrl = frameSrc.toLowerCase();
-                if ((lowerUrl.includes('google.com/search') || lowerUrl.includes('google.com/#')) && 
-                    (lowerUrl.includes('schedule+online') || lowerUrl.includes('schedule%20online') || lowerUrl.includes('schedule online'))) {
-                    awardCheckpoint1();
-                }
-                // also edge: sometimes user might be on google.com and typed but not search? but load catches it.
-                // also if google homepage and we wait for query param
-            }
-            
-            // ---- Checkpoint 2 validation (exact match CORRECT_LINK) ----
-            if (!checkpoint2Completed && checkpoint1Completed && trackingAllowed && currentCheckpoint === 2) {
-                // normalize both
-                let normalized = frameSrc.split('?')[0].split('#')[0];
-                if (normalized === CORRECT_LINK || normalized === CORRECT_LINK.replace(/\/$/, '') || frameSrc === CORRECT_LINK) {
-                    // matched the hidden correct link
-                    if (!cp2Validated) {
-                        cp2Validated = true;
-                        awardCheckpoint2();
-                    }
-                }
-                // also extra: because we need to verify user clicked "4th row" but due to iframe we can't know row index, but we instruct
-                // user to open 4th row that matches correct link, so we detect correct URL. That's the functional requirement.
-            }
-        });
-    }
-    
-    // Request tracking permission for Chrome/Safari (notifications/geolocation? we use generic "tracking" popup)
-    // To simulate a browser permission popup, we use Notification API or Geolocation (most common). We'll use Geolocation to get "Allow" prompt.
-    // The requirement: "First user must click allow tracking if user uses chrome or safari there is will be pop up user must allow it"
-    function requestTrackingPermission() {
-        if (trackingAllowed) {
-            showToastMessage("Tracking already allowed!");
+    function renderCurrentTask() {
+        if (!trackingAllowed) {
+            taskTitleSpan.innerText = "🔔 Allow tracking (required)";
+            taskRewardSpan.innerText = "🔓 Unlock system";
+            taskDescDiv.innerHTML = "⚠️ Chrome / Safari will show a browser popup. You must click 'Allow' to start the checkpoint journey.";
+            actionArea.innerHTML = `<button class="action-btn primary" id="requestTrackingBtn">📡 Request Tracking Permission</button>`;
+            simulatorArea.classList.add('hidden');
+            verificationMsgDiv.classList.add('hidden');
+            const btn = document.getElementById('requestTrackingBtn');
+            if (btn) btn.onclick = requestTrackingPermission;
             return;
         }
-        // Use Geolocation API to trigger permission popup (works in Chrome/Safari)
+        
+        if (!checkpoint1Completed) {
+            taskTitleSpan.innerText = "🌐 Checkpoint 1 · Search 'Schedule Online' on Google";
+            taskRewardSpan.innerText = "+25 pts";
+            taskDescDiv.innerHTML = `
+                <strong>📋 Instructions:</strong><br>
+                1. Type "Schedule Online" in the Google search bar below<br>
+                2. Click the search button or press Enter<br>
+                3. The system will detect your search and award 25 points!
+            `;
+            actionArea.innerHTML = '';
+            simulatorArea.classList.remove('hidden');
+            simulatorArea.innerHTML = `
+                <div class="search-simulator">
+                    <div class="google-search-bar">
+                        <input type="text" id="googleSearchInput" placeholder="Google Search" value="Schedule Online">
+                        <button id="googleSearchBtn">🔍 Google Search</button>
+                    </div>
+                    <div id="searchResultsArea" class="search-results hidden"></div>
+                </div>
+            `;
+            
+            const searchInput = document.getElementById('googleSearchInput');
+            const searchBtn = document.getElementById('googleSearchBtn');
+            const resultsArea = document.getElementById('searchResultsArea');
+            
+            const performSearch = () => {
+                const query = searchInput.value.trim();
+                if (query.toLowerCase() === "schedule online") {
+                    resultsArea.classList.remove('hidden');
+                    resultsArea.innerHTML = `
+                        <div style="padding: 10px; color: #34a853; font-weight: bold;">✓ Search successful! Detected "Schedule Online"</div>
+                        <div class="result-item">
+                            <div class="result-title">Schedule Online - Easy Booking Platform</div>
+                            <div class="result-url">https://schedulebuilder.org/</div>
+                            <div class="result-desc">Schedule appointments online easily with our free platform...</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-title">Online Scheduling Software</div>
+                            <div class="result-url">https://calendly.com/</div>
+                            <div class="result-desc">Simplify scheduling with online booking tools...</div>
+                        </div>
+                        <div class="result-item" id="targetResultItem">
+                            <div class="result-title">ScheduleBuilder - Official Site</div>
+                            <div class="result-url">https://schedulebuilder.org/</div>
+                            <div class="result-desc">The official schedule building platform for professionals...</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-title">Schedule Online - Google Business</div>
+                            <div class="result-url">https://business.google.com/</div>
+                            <div class="result-desc">Manage appointments with Google Business...</div>
+                        </div>
+                    `;
+                    
+                    awardCheckpoint1();
+                } else {
+                    resultsArea.classList.remove('hidden');
+                    resultsArea.innerHTML = `<div style="padding: 10px; color: #ea4335;">⚠️ Please search exactly: "Schedule Online" to complete checkpoint 1</div>`;
+                }
+            };
+            
+            searchBtn.onclick = performSearch;
+            searchInput.onkeypress = (e) => { if (e.key === 'Enter') performSearch(); };
+            
+            return;
+        }
+        else if (!checkpoint2Completed) {
+            taskTitleSpan.innerText = "🎯 Checkpoint 2 · Click the 4th Row Link";
+            taskRewardSpan.innerText = "+75 pts";
+            taskDescDiv.innerHTML = `
+                <strong>🎯 Mission:</strong> In the search results below, click the <strong>4th row link</strong> that matches exactly:<br>
+                <div class="row-highlight">🔗 ${CORRECT_LINK}</div>
+                Once you click the correct matching URL, you'll receive 75 points!
+            `;
+            actionArea.innerHTML = `<button class="action-btn secondary" id="resetSearchCp2">🔄 Reset Search Results</button>`;
+            simulatorArea.classList.remove('hidden');
+            simulatorArea.innerHTML = `
+                <div class="search-simulator">
+                    <div class="google-search-bar" style="background: #f2f2f2;">
+                        <input type="text" value="Schedule Online" disabled style="background: #f8f9fa;">
+                        <button disabled style="background: #9aa0a6;">🔍</button>
+                    </div>
+                    <div class="search-results">
+                        <div class="result-item">
+                            <div class="result-title">Schedule Online - Easy Booking Platform</div>
+                            <div class="result-url">https://booking.example.com/</div>
+                            <div class="result-desc">Book appointments online instantly...</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-title">Online Scheduling Software</div>
+                            <div class="result-url">https://calendly.com/</div>
+                            <div class="result-desc">Simplify scheduling with online booking tools...</div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-title">ScheduleBuilder Pro</div>
+                            <div class="result-url">https://schedulebuilderpro.com/</div>
+                            <div class="result-desc">Advanced scheduling for businesses...</div>
+                        </div>
+                        <div class="result-item clickable" id="correctLinkRow">
+                            <div class="result-title" style="color: #1a0dab;">⭐ ScheduleBuilder Official</div>
+                            <div class="result-url" style="color: #006621;">https://schedulebuilder.org/</div>
+                            <div class="result-desc">The official schedule building platform - 4th row link</div>
+                            <div style="margin-top: 8px;"><span style="background: #f5b04220; padding: 2px 8px; border-radius: 12px; font-size: 12px;">🎯 Correct target link (4th row)</span></div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-title">Schedule Online - Google Business</div>
+                            <div class="result-url">https://business.google.com/</div>
+                            <div class="result-desc">Manage appointments with Google Business...</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            const resetBtn = document.getElementById('resetSearchCp2');
+            if (resetBtn) {
+                resetBtn.onclick = () => {
+                    renderCurrentTask();
+                    showToast("Search results reset!");
+                };
+            }
+            
+            const correctElement = document.getElementById('correctLinkRow');
+            if (correctElement) {
+                correctElement.onclick = () => {
+                    if (!checkpoint2Completed) {
+                        awardCheckpoint2();
+                    }
+                };
+                correctElement.style.cursor = 'pointer';
+            }
+            return;
+        }
+        else {
+            taskTitleSpan.innerText = "🎉 Challenge Complete!";
+            taskRewardSpan.innerText = "🏁 Finished";
+            taskDescDiv.innerHTML = `✨ You collected ${totalPoints} points! Great job completing both checkpoints.`;
+            actionArea.innerHTML = `<button class="action-btn" disabled>✅ Mission Accomplished</button>`;
+            simulatorArea.classList.add('hidden');
+            verificationMsgDiv.classList.remove('hidden');
+            verificationMsgDiv.innerHTML = `🏅 Congratulations! All checkpoints passed. Total points: ${totalPoints}`;
+            return;
+        }
+    }
+    
+    function requestTrackingPermission() {
+        if (trackingAllowed) {
+            showToast("Tracking already allowed!");
+            return;
+        }
+        
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    // user allowed
                     trackingAllowed = true;
                     trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-                    currentCheckpoint = 1;   // after tracking allowed, first checkpoint starts
+                    currentCheckpoint = 1;
                     updateCheckpointVisuals();
                     renderCurrentTask();
-                    showToastMessage("✅ Tracking allowed! Now proceed to Checkpoint 1 (25pts).");
-                    // ensure iframe shows google
-                    iframeZone.classList.remove('hidden');
-                    trackingFrame.src = "https://www.google.com";
+                    showToast("✅ Tracking allowed! Now proceed to Checkpoint 1 (25pts).");
                 },
                 (error) => {
-                    console.warn("Geolocation denied", error);
-                    showToastMessage("❌ You must allow tracking permission (location) to continue. Click again and 'Allow'.");
+                    showToast("❌ You must allow tracking permission to continue. Click again and select 'Allow'.");
                     trackingTextSpan.innerText = "Tracking: DENIED";
                 },
                 { enableHighAccuracy: false, timeout: 8000 }
             );
         } else {
-            // fallback if no geolocation (simulate manual allow button)
-            if(confirm("Browser doesn't support auto-permission. Simulate tracking? (For demo click OK)")) {
+            if(confirm("Browser doesn't support auto-permission. Simulate tracking? (Click OK for demo)")) {
                 trackingAllowed = true;
                 trackingTextSpan.innerText = "Tracking: ACTIVE (simulated)";
                 currentCheckpoint = 1;
                 updateCheckpointVisuals();
                 renderCurrentTask();
-                trackingFrame.src = "https://www.google.com";
-                showToastMessage("Tracking manually allowed (demo mode)");
+                showToast("Tracking manually allowed (demo mode)");
             }
         }
     }
     
-    // For initial state: tracking not allowed, show request button, hide iframe
     function init() {
         trackingAllowed = false;
         checkpoint1Completed = false;
@@ -593,10 +641,8 @@
         trackingTextSpan.innerText = "Tracking: Pending";
         updateCheckpointVisuals();
         renderCurrentTask();
-        setupIframeTracking();
     }
     
-    // manually ensure that iframe loads google for fresh experience
     init();
 </script>
 </body>
