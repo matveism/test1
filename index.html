@@ -150,21 +150,26 @@
             background: #2c3e66;
             border: none;
             color: white;
-            padding: 12px 24px;
+            padding: 14px 28px;
             border-radius: 60px;
             font-weight: 600;
             cursor: pointer;
             transition: 0.2s;
-            font-size: 0.9rem;
+            font-size: 1rem;
         }
 
         .action-btn:hover {
-            transform: translateY(-1px);
+            transform: translateY(-2px);
             filter: brightness(1.05);
         }
 
         .action-btn.primary {
             background: #e67e22;
+            box-shadow: 0 4px 12px rgba(230, 126, 34, 0.3);
+        }
+
+        .action-btn.secondary {
+            background: #2c3e66;
         }
 
         .iframe-container {
@@ -188,14 +193,14 @@
             border-radius: 20px;
             padding: 12px 18px;
             margin-top: 18px;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #b9d0f0;
         }
 
         .warning-box {
             background: #2a2a1a;
             border-left: 4px solid #ff9800;
-            padding: 12px;
+            padding: 15px;
             margin-top: 15px;
             border-radius: 8px;
         }
@@ -231,6 +236,7 @@
             border: 1px solid #ffb347;
             animation: fadeInUp 0.3s ease;
             pointer-events: none;
+            font-size: 0.9rem;
         }
 
         @keyframes fadeInUp {
@@ -249,16 +255,38 @@
             cursor: not-allowed;
         }
 
-        .permission-pending {
-            background: #2a2a3a;
-            border: 1px solid #ffb347;
-            animation: pulse 1.5s infinite;
+        .permission-panel {
+            background: linear-gradient(135deg, #1e2a3a 0%, #16212e 100%);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .browser-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .step-list {
+            text-align: left;
+            margin: 20px 0;
+            padding-left: 20px;
+        }
+
+        .step-list li {
+            margin: 10px 0;
+            color: #cddcec;
         }
 
         @keyframes pulse {
-            0% { border-color: #ffb347; box-shadow: 0 0 0 0 rgba(255, 180, 71, 0.4); }
-            70% { border-color: #ffb347; box-shadow: 0 0 0 10px rgba(255, 180, 71, 0); }
-            100% { border-color: #ffb347; box-shadow: 0 0 0 0 rgba(255, 180, 71, 0); }
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse-btn {
+            animation: pulse 1.5s infinite;
         }
     </style>
 </head>
@@ -291,12 +319,10 @@
 
     <div class="task-panel" id="taskPanel">
         <div class="task-header">
-            <span id="taskTitle">📍 Allow Tracking First</span>
-            <span class="reward" id="taskReward">+25 pts</span>
+            <span id="taskTitle">📍 Allow Tracking to Start</span>
+            <span class="reward" id="taskReward">🔓 Required</span>
         </div>
-        <div id="taskDescription" class="info-message permission-pending">
-            🔐 <strong>Tracking permission required!</strong> Chrome/Safari will show a popup - please click "Allow" to continue.
-        </div>
+        <div id="taskDescription"></div>
         <div id="actionArea"></div>
         <div id="iframeZone" class="iframe-container hidden">
             <iframe id="trackingFrame" src="about:blank" title="Google Search"></iframe>
@@ -413,7 +439,7 @@
         saveState();
     }
     
-    // Monitor iframe navigation to detect when user visits schedulebuilder.org
+    // Monitor iframe navigation
     function setupIframeTracking() {
         trackingFrame.addEventListener('load', function() {
             let currentUrl = "";
@@ -425,7 +451,6 @@
             
             console.log("[Tracker] Iframe loaded:", currentUrl);
             
-            // Checkpoint 1: User needs to search for "Schedule Online" on Google
             if (!checkpoint1Completed && trackingAllowed && currentCheckpoint === 1) {
                 if (currentUrl.includes('google.com') && (currentUrl.includes('q=Schedule+Online') || currentUrl.includes('q=Schedule%20Online') || currentUrl.toLowerCase().includes('schedule online'))) {
                     awardCheckpoint1();
@@ -433,7 +458,6 @@
                 }
             }
             
-            // Checkpoint 2: User needs to find and click schedulebuilder.org
             if (!checkpoint2Completed && checkpoint1Completed && trackingAllowed && currentCheckpoint === 2) {
                 if (currentUrl.toLowerCase().includes(TARGET_URL)) {
                     awardCheckpoint2();
@@ -443,25 +467,90 @@
         });
     }
     
+    function requestTrackingPermission() {
+        if (trackingAllowed) {
+            showToast("Tracking already allowed! Starting challenges...");
+            renderCurrentTask();
+            return;
+        }
+        
+        // Try Notification API (works in Chrome, requires user gesture in Safari)
+        if ('Notification' in window) {
+            Notification.requestPermission().then(permission => {
+                if (permission === "granted") {
+                    trackingAllowed = true;
+                    trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+                    currentCheckpoint = 1;
+                    updateCheckpointVisuals();
+                    renderCurrentTask();
+                    showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
+                    saveState();
+                } else {
+                    showToast("❌ Tracking permission denied. Please click the button again and select 'Allow'.", true);
+                    trackingTextSpan.innerText = "Tracking: DENIED";
+                }
+            });
+        } 
+        // Fallback to Geolocation for older browsers
+        else if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    trackingAllowed = true;
+                    trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+                    currentCheckpoint = 1;
+                    updateCheckpointVisuals();
+                    renderCurrentTask();
+                    showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
+                    saveState();
+                },
+                (error) => {
+                    showToast("❌ Please allow location access to continue.", true);
+                    trackingTextSpan.innerText = "Tracking: DENIED";
+                }
+            );
+        } else {
+            // Manual override for browsers that don't support permissions
+            if (confirm("Your browser doesn't support automatic permissions. Click OK to continue in demo mode.")) {
+                trackingAllowed = true;
+                trackingTextSpan.innerText = "Tracking: ACTIVE (demo)";
+                currentCheckpoint = 1;
+                updateCheckpointVisuals();
+                renderCurrentTask();
+                showToast("Tracking enabled (demo mode)");
+                saveState();
+            }
+        }
+    }
+    
     function renderCurrentTask() {
         if (!trackingAllowed) {
             taskTitleSpan.innerText = "🔔 Allow Tracking to Start";
             taskRewardSpan.innerText = "🔓 Required";
             taskDescDiv.innerHTML = `
-                <strong>⚠️ Chrome / Safari Tracking Permission Required</strong><br><br>
-                A browser popup will appear automatically. You MUST click <strong>"Allow"</strong> to start earning points.<br>
-                This permission is needed to verify your task completion.
-                <div class="warning-box" style="margin-top: 15px;">
-                    💡 <strong>No popup?</strong> If you don't see a popup, check if notifications are blocked in your browser settings.
+                <div class="permission-panel">
+                    <div class="browser-icon">🌐</div>
+                    <h3 style="color: #ffdf8c; margin: 10px 0;">Tracking Permission Required</h3>
+                    <p style="color: #b9c7d9;">Chrome & Safari need your permission to track task completion.</p>
+                    
+                    <div class="step-list">
+                        <li>🔘 Click the <strong>"Allow Tracking"</strong> button below</li>
+                        <li>🔘 A browser popup will appear asking for permission</li>
+                        <li>🔘 Click <strong style="color: #2ecc71;">"Allow"</strong> or <strong style="color: #2ecc71;">"Grant"</strong></li>
+                        <li>🔘 Once allowed, you'll unlock Checkpoint 1 and earn 25 points!</li>
+                    </div>
+                    
+                    <div class="warning-box">
+                        💡 <strong>Safari Users:</strong> If the popup doesn't appear, check that notifications are enabled in Safari Settings > Websites > Notifications.
+                    </div>
                 </div>
             `;
-            actionArea.innerHTML = `<button class="action-btn primary" id="retryPermissionBtn">🔄 Retry Permission Request</button>`;
+            actionArea.innerHTML = `<button class="action-btn primary pulse-btn" id="allowTrackingBtn">🔓 Allow Tracking Permission</button>`;
             iframeZone.classList.add('hidden');
             verificationMsgDiv.classList.add('hidden');
             
-            const retryBtn = document.getElementById('retryPermissionBtn');
-            if (retryBtn) {
-                retryBtn.onclick = () => {
+            const allowBtn = document.getElementById('allowTrackingBtn');
+            if (allowBtn) {
+                allowBtn.onclick = () => {
                     requestTrackingPermission();
                 };
             }
@@ -477,6 +566,9 @@
                     1. In the Google iframe below, type <strong>"Schedule Online"</strong> in the search bar<br>
                     2. Press Enter or click Google Search<br>
                     3. Once you search for "Schedule Online", you'll automatically earn 25 points!
+                </div>
+                <div class="success-box" style="margin-top: 10px;">
+                    💡 <strong>Hint:</strong> Just type "Schedule Online" exactly and press Enter!
                 </div>
             `;
             actionArea.innerHTML = `<button class="action-btn secondary" id="resetGoogleBtn">🔄 Reset to Google.com</button>`;
@@ -510,7 +602,7 @@
                     4. Once you visit the site, you'll automatically earn 75 points!
                 </div>
                 <div class="success-box" style="margin-top: 10px;">
-                    💡 <strong>Hint:</strong> The correct link is in the search results. Find it yourself!
+                    💡 <strong>Hint:</strong> The correct link is somewhere in the search results. Find it yourself!
                 </div>
             `;
             actionArea.innerHTML = `
@@ -561,99 +653,32 @@
         }
     }
     
-    function requestTrackingPermission() {
-        if (trackingAllowed) {
-            showToast("Tracking already allowed!");
-            return;
-        }
-        
-        // Use Notification API for clean browser permission popup
-        if (Notification.permission === "granted") {
-            trackingAllowed = true;
-            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-            taskDescDiv.classList.remove('permission-pending');
-            currentCheckpoint = 1;
-            updateCheckpointVisuals();
-            renderCurrentTask();
-            showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
-            saveState();
-        } else if (Notification.permission !== "denied") {
-            Notification.requestPermission().then(permission => {
-                if (permission === "granted") {
-                    trackingAllowed = true;
-                    trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-                    taskDescDiv.classList.remove('permission-pending');
-                    currentCheckpoint = 1;
-                    updateCheckpointVisuals();
-                    renderCurrentTask();
-                    showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
-                    saveState();
-                } else {
-                    showToast("❌ You must allow tracking to continue. Click 'Retry Permission Request' and select 'Allow'.", true);
-                    trackingTextSpan.innerText = "Tracking: DENIED";
-                }
-            });
-        } else {
-            // If notifications are blocked, show instructions
-            showToast("⚠️ Notifications are blocked. Please check browser settings and allow notifications for this site.", true);
-            trackingTextSpan.innerText = "Tracking: BLOCKED";
-        }
-    }
-    
-    // Automatically request permission when page loads
-    function autoRequestPermission() {
-        // Only request if tracking not already allowed and not completed
-        if (!trackingAllowed && !checkpoint1Completed && !checkpoint2Completed) {
-            // Small delay to ensure page is ready
-            setTimeout(() => {
-                if (Notification.permission === "default") {
-                    Notification.requestPermission().then(permission => {
-                        if (permission === "granted") {
-                            trackingAllowed = true;
-                            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-                            taskDescDiv.classList.remove('permission-pending');
-                            currentCheckpoint = 1;
-                            updateCheckpointVisuals();
-                            renderCurrentTask();
-                            showToast("✅ Tracking allowed! Now use Google to search for 'Schedule Online'");
-                            saveState();
-                        } else {
-                            trackingTextSpan.innerText = "Tracking: DENIED";
-                            showToast("❌ Tracking permission denied. Click 'Retry Permission Request' to try again.", true);
-                        }
-                    });
-                } else if (Notification.permission === "granted") {
-                    trackingAllowed = true;
-                    trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-                    taskDescDiv.classList.remove('permission-pending');
-                    currentCheckpoint = 1;
-                    updateCheckpointVisuals();
-                    renderCurrentTask();
-                    showToast("✅ Tracking already allowed! Now use Google to search for 'Schedule Online'");
-                    saveState();
-                }
-            }, 500);
-        } else if (trackingAllowed) {
-            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-            taskDescDiv.classList.remove('permission-pending');
-            updateCheckpointVisuals();
-            renderCurrentTask();
-        }
-    }
-    
     function init() {
         updatePointsUI();
         updateCheckpointVisuals();
         setupIframeTracking();
         
-        // Auto-request permission on page load
-        autoRequestPermission();
+        // Check if tracking is already allowed from previous session
+        if (trackingAllowed) {
+            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
+            renderCurrentTask();
+            if (!checkpoint1Completed && !checkpoint2Completed) {
+                showToast("📍 Tracking active! Search for 'Schedule Online' on Google to earn 25 points.");
+            }
+        } else {
+            renderCurrentTask();
+        }
         
         if (checkpoint1Completed && checkpoint2Completed) {
             showToast("🎉 Welcome back! You've already completed all checkpoints!");
-            trackingTextSpan.innerText = "Tracking: ACTIVE ✅";
-        } else if (trackingAllowed && !checkpoint1Completed) {
-            showToast("📍 Tracking active! Search for 'Schedule Online' on Google to earn 25 points.");
+        }
+        
+        // Show Safari-specific instructions
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        if (isSafari && !trackingAllowed) {
+            setTimeout(() => {
+                showToast("💡 Safari Tip: Click 'Allow Tracking' then look for the popup in the top-left corner", false);
+            }, 1000);
         }
     }
     
